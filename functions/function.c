@@ -20,8 +20,8 @@ void initializeBoard(int tamanio, char tablero[tamanio][tamanio]);
 void colocarBarcosJugador(int tamanio, char tablero[tamanio][tamanio], int cantidadBarcos);
 void colocarBarcosPC(int tamanio, char tablero[tamanio][tamanio], int cantidadBarcos, int posicionesEnemigas[cantidadBarcos][2]);
 void showTitle();
-void turnoJugador(int tamanio, char tableroPC[tamanio][tamanio], int cantidadBarcos, int posicionesEnemigas[cantidadBarcos][2]);
-void PCTurn(int tamanio, char tableroJugador[tamanio][tamanio]);
+void turnoJugador(int tamanio, char tableroPC[tamanio][tamanio], int cantidadBarcos, int posicionesEnemigas[cantidadBarcos][2], int *barcosEnemigos);
+void PCTurn(int tamanio, char tableroJugador[tamanio][tamanio], int *barcosJugador);
 void showRules()
 {
     printf("\nREGLAS DEL JUEGO: BATALLA NAVAL\n\n"
@@ -134,7 +134,7 @@ void colocarBarcosJugador(int tamanio, char tablero[tamanio][tamanio], int canti
     for (int i = 0; i < cantidadBarcos; i++)
     {
 
-        printf("Por favor, ingrese la fila donde quiere que se ubique a su barco %d\n", i);
+        printf("Por favor, ingrese la fila donde quiere que se ubique a su barco %d\n", (1 + i));
         scanf("%d", &fila);
         while (fila < 0 || fila >= tamanio)
         {
@@ -204,7 +204,6 @@ void colocarBarcosPC(int tamanio, char tablero[tamanio][tamanio], int cantidadBa
                         posicionesEnemigas[i][0] = x;
                         posicionesEnemigas[i][1] = y;
                         tablero[x][y] = 'B';
-                        printf("Barco %d Posicion [%d,%d]", i, x, y);
                     }
                     else
                     {
@@ -244,6 +243,9 @@ void initializeBoard(int tamanio, char tablero[tamanio][tamanio])
 }
 void playGame(int tamanioTablero)
 {
+    int barcosPropios = 4;
+    int barcosEnemigos = 4;
+
     int posicionesEnemigas[4][2];
     char tablero[tamanioTablero][tamanioTablero];
     char tableroPcOculto[tamanioTablero][tamanioTablero];
@@ -257,10 +259,10 @@ void playGame(int tamanioTablero)
     colocarBarcosPC(tamanioTablero, tableroPcOculto, 4, posicionesEnemigas);
 
     showTitle();
-    for (int i = 0; i < 4; i++)
+    while (barcosEnemigos > 0 && barcosPropios > 0)
     {
-        turnoJugador(tamanioTablero, tableroPcMuestra, 4, posicionesEnemigas);
-        PCTurn(tamanioTablero, tablero);
+        turnoJugador(tamanioTablero, tableroPcMuestra, 4, posicionesEnemigas, &barcosEnemigos);
+        PCTurn(tamanioTablero, tablero, &barcosPropios);
         printf("\n\tTABLERO");
         printf("\n\n");
         mostrarTablero(tamanioTablero, tablero);
@@ -268,6 +270,16 @@ void playGame(int tamanioTablero)
         printf("\n\n");
         mostrarTablero(tamanioTablero, tableroPcMuestra);
         printf("\n\n");
+        if (barcosEnemigos == 0)
+        {
+            printf("GANASTE");
+            break;
+        }
+        else if (barcosPropios == 0)
+        {
+
+            printf("PERDISTE");
+        }
     }
 }
 
@@ -301,10 +313,9 @@ int validateShot(int tamanio, char tablero[tamanio][tamanio], int x, int y)
 }
 // #####
 
-void turnoJugador(int tamanio, char tableroPC[tamanio][tamanio], int cantidadBarcos, int posicionesEnemigas[cantidadBarcos][2])
+void turnoJugador(int tamanio, char tableroPC[tamanio][tamanio], int cantidadBarcos, int posicionesEnemigas[cantidadBarcos][2], int *barcosEnemigos)
 {
     int x, y;
-    bool fallo;
     do
     {
         printf("Ingresa la coordenada X: ");
@@ -319,13 +330,14 @@ void turnoJugador(int tamanio, char tableroPC[tamanio][tamanio], int cantidadBar
         {
             printf("¡Acertaste y hundiste un barco!\n");
             tableroPC[x][y] = 'X';
+            (*barcosEnemigos)--;
             return;
         }
     }
     printf("Fallaste.\n");
     tableroPC[x][y] = 'O';
 }
-void PCTurn(int tamanio, char tableroJugador[tamanio][tamanio])
+void PCTurn(int tamanio, char tableroJugador[tamanio][tamanio], int *barcosJugador)
 {
     // Genero 2 numero aleatorios para la fila y columna
     int randomRowPosition = rand() % tamanio;
@@ -342,10 +354,9 @@ void PCTurn(int tamanio, char tableroJugador[tamanio][tamanio])
     if (tableroJugador[randomRowPosition][randomColumnPosition] == 'B')
     {
         tableroJugador[randomRowPosition][randomColumnPosition] = 'X'; // Barco hundido
-        // (barcosHundidos)++;
-        // (barcosRestantes)--;
         printf("PC has fired at (%d, %d)\n", randomRowPosition, randomColumnPosition);
         printf("The PC has sunk one of your ships.\n");
+        (*barcosJugador)--;
     }
     else
     {

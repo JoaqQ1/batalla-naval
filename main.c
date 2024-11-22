@@ -7,8 +7,8 @@
 
 
 int main() {
-    init
-    ();
+   
+    init();
     return 0;
 }
 
