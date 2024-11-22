@@ -7,16 +7,8 @@
 
 
 int main() {
-    struct Jugador jugadores[] = {
-        {"Joaquin",100},
-        {"Luis",100},
-        {"Ezequiel",200}
-    };
-    printf("%s",jugadores[0].nombre);
-    guardarDatos(jugadores);
-    // char option;
-    // imprimirMenu(jugador,option);
-
+    init
+    ();
     return 0;
 }
 
