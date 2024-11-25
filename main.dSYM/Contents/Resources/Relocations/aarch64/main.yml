@@ -1,5 +1,5 @@
 ---
 triple:          'arm64-apple-darwin'
-binary-path:     '/Users/joaquinignacio/batalla-naval/main'
+binary-path:     '/Users/joaquinignacio/repoNuevo/batalla-naval/main'
 relocations:     []
 ...

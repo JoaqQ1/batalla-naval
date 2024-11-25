@@ -34,6 +34,10 @@ En Git Bash, escribe el siguiente comando reemplazando el enlace por el de tu re
 Esto descargará todos los archivos del repositorio en tu carpeta actual.
 
 ---
+# Intrucciones de ejecucion
+#### Tecnologías nesesarias:
+* GCC
+* Vscode (o el IDE de tu preferencia)
 
 
 Y listo! Ya tienes el repositorio clonado en tu computadora. 🎉

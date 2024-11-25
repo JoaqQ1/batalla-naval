@@ -11,16 +11,15 @@ struct Jugador
     char nombre[MAX_LENGTH];
     int puntos;
 };
-
+void *ordenarJugadores();
 void requestName(char nombre[]);
-int playGame(int tamanio);
+int playGame(int tamanioTablero);
 void showTitle();
-void showTitleScore();
 void initializeBoard(int tamanio, char tablero[tamanio][tamanio]);
 void mostrarTablero(int tamanio, char tablero[tamanio][tamanio]);
 void colocarBarcosJugador(int tamanio, char tablero[tamanio][tamanio], int cantidadBarcos);
 void colocarBarcosPC(int tamanio, char tablero[tamanio][tamanio], int cantidadBarcos, int posicionesEnemigas[cantidadBarcos][2]);
-void turnoJugador(int tamanio, char tableroPC[tamanio][tamanio], int cantidadBarcos, int posicionesEnemigas[cantidadBarcos][2], int *barcosEnemigos);
+bool turnoJugador(int tamanio, char tableroPC[tamanio][tamanio], int cantidadBarcos, int posicionesEnemigas[cantidadBarcos][2], int *barcosEnemigos);
 void PCTurn(int tamanio, char tableroJugador[tamanio][tamanio], int *barcosJugador);
 int cantidadJugadores();
 void *getJugadores();
@@ -28,22 +27,19 @@ void guardar(struct Jugador jugador);
 void actualizar(struct Jugador jugador);
 void mostrarJugadores();
 bool existeElJugador(struct Jugador jugador);
+void mostrarMensajeGanaste();
+void mostrarMensajePerdiste();
 
 void showRules()
 {
-    printf("\nREGLAS DEL JUEGO: BATALLA NAVAL\n\n"
-           "Objetivo: Hundir todos los barcos de la computadora antes de que ella hunda los tuyos.\n\n"
-           "Barcos:\n\n"
-           "Todos los barcos ocupan 3 o 2 casillas.\n"
-           "Colocación: Los barcos se colocan en un tablero de 10x10, en posiciones horizontales o verticales.\n\n"
-           "Turnos:\n\n"
-           "Dispara a una coordenada del tablero enemigo.\n"
-           "La computadora responderá con un disparo en tu tablero.\n"
-           "Impactos:\n\n"
-           "'Agua' si no hay barco.\n"
-           "'Tocado' si aciertas un barco.\n"
-           "'Hundido' si destruyes todo un barco.\n\n"
-           "Gana: El primer jugador en hundir todos los barcos del oponente.\n");
+    printf("\n\n"
+           "\t\t • Objetivo: Hundir todos los barcos de la computadora antes de que ella hunda los tuyos.\n"
+           "\t\t • Barcos: Todos los barcos ocupan 1 casilla.\n"
+           "\t\t • Colocación: Los barcos se colocan en un tablero de NxN, en posiciones horizontales o verticales.\n"
+           "\t\t • Turnos: Dispara a una coordenada del tablero enemigo.\n"
+           "\t\t • La computadora responderá con un disparo en tu tablero.\n"
+           "\t\t • Impactos: \n\t\t\t'Agua' si no hay barco.\n\t\t\t'Tocado' si aciertas un barco.\n\t\t\t'Hundido' si destruyes todo un barco.\n\n"
+           "\t\tGana: El primer jugador en hundir todos los barcos del oponente.\n\n");
 }
 void showTitle()
 {
@@ -57,6 +53,7 @@ void showTitle()
     printf(" |____/  \\__,_| \\__| \\__||_| \\___| |_____/ |_| |_||_|| .__/ \n");
     printf("                                                     | |    \n");
     printf("                                                     |_|    \n");
+    printf("                  BattleShip! 🚢💥\n");
     printf("\n");
     printf("\n");
 }
@@ -64,20 +61,21 @@ void init()
 {
     char option;
     struct Jugador jugador;
+    int puntos;
     showRules();
     requestName(jugador.nombre);
     do
     {
         showTitle();
-        printf("   Hi %s, please choose an option:\n", jugador.nombre);
+        printf("   Hola %s, por favor ingrese una opcion:\n", jugador.nombre);
         printf("   --------------------------------------------------------------------------\n");
-        printf("   1. PLAY THE GAME\n");
-        printf("   2. SCORES\n");
-        printf("   3. EXIT\n");
+        printf("   1. JUGAR\n");
+        printf("   2. PUNTAJES\n");
+        printf("   3. SALIR\n");
         printf("   --------------------------------------------------------------------------\n");
         printf("\n");
 
-        printf("  Enter your choice: ");
+        printf("  Elija su opcion: ");
         option = getchar();
 
         while (getchar() != '\n')
@@ -86,8 +84,7 @@ void init()
         switch (option)
         {
         case '1':
-            printf("\nStarting the game...\n");
-            int puntos = playGame(4);
+            puntos = playGame(4);
             jugador.puntos = puntos;
             if (existeElJugador(jugador))
             {
@@ -99,14 +96,13 @@ void init()
             }
             break;
         case '2':
-            showTitleScore();
             mostrarJugadores();
             break;
         case '3':
-            printf("\nExiting the game. Goodbye!\n");
+            printf("\n Saliendo del juego. Hasta luego!\n");
             break;
         default:
-            printf("\nInvalid option, please try again.\n");
+            printf("\033[1;31m                  Opcion invalida, por favor ingrese una opcion valida.\033[0m\n");
         }
 
         if (option == '3')
@@ -130,17 +126,15 @@ int verifyName(const char name[])
 }
 void requestName(char name[])
 {
-    printf("Enter your name: ");
+    printf("Por favor, ingrese su nombre: ");
     fgets(name, 50, stdin);           // Guarda el nombre del jugador en name
     name[strcspn(name, "\n")] = '\0'; // Se elimina el salto de linea
     while (verifyName(name))
     {
-        printf("Invalid name. It cannot be empty or only spaces. Please try again: ");
+        printf("Nombre invalido, '%s'. Por favor, reingrese su nombre de nuevo: ", name);
         fgets(name, 50, stdin);
         name[strcspn(name, "\n")] = '\0';
     }
-
-    printf("Hi %s!, Welcome to Battleship.\n\n", name);
 }
 
 void colocarBarcosJugador(int tamanio, char tablero[tamanio][tamanio], int cantidadBarcos)
@@ -158,7 +152,7 @@ void colocarBarcosJugador(int tamanio, char tablero[tamanio][tamanio], int canti
             printf("\n\tError!. Por favor, ingrese una fila que este dentro del rango [0,%d]\n", tamanio);
             scanf("%d", &fila);
         }
-        printf("Por favor, ingrese la columna donde quiere que se ubique a su barco %d\n", i);
+        printf("Por favor, ingrese la columna donde quiere que se ubique a su barco %d\n", (1 + i));
         scanf("%d", &columna);
         while (columna < 0 || columna >= tamanio)
         {
@@ -191,17 +185,46 @@ void colocarBarcosJugador(int tamanio, char tablero[tamanio][tamanio], int canti
 
 void mostrarTablero(int tamanio, char tablero[tamanio][tamanio])
 {
+    int margen = (80 - (tamanio * 6)) / 2;
+    printf("%*s    ", margen, ""); // Espacio para centrar encabezados
+    for (int i = 0; i < tamanio; i++)
+    {
+        printf("  %d   ", i); // Encabezado de columnas
+    }
+    printf("\n");
+
+    printf("%*s   ", margen, "");
+    for (int i = 0; i < tamanio; i++)
+    {
+        printf("──────"); // Separadores superiores
+    }
+    printf("\n");
 
     for (int i = 0; i < tamanio; i++)
     {
-        printf("\t|");
+        printf("%*s%d  |", margen, "", i); // Etiqueta de filas
         for (int j = 0; j < tamanio; j++)
         {
-            printf("  %c  ", tablero[i][j]);
+            if (tablero[i][j] == 'X') // Tiro acertado
+                printf("\033[1;31m  %c  \033[0m|", tablero[i][j]);
+            else if (tablero[i][j] == 'O') // Tiro fallido
+                printf("\033[1;34m  %c  \033[0m|", tablero[i][j]);
+            else if (tablero[i][j] == 'B') // Barco
+                printf("\033[1;32m  %c  \033[0m|", tablero[i][j]);
+            else
+                printf("  %c  |", tablero[i][j]);
         }
-        printf("|\n");
+        printf("\n");
+
+        printf("%*s   ", margen, "");
+        for (int j = 0; j < tamanio; j++)
+        {
+            printf("──────");
+        }
+        printf("\n");
     }
 }
+
 void colocarBarcosPC(int tamanio, char tablero[tamanio][tamanio], int cantidadBarcos, int posicionesEnemigas[cantidadBarcos][2])
 {
 
@@ -240,6 +263,34 @@ void limpiarBuffer()
         // Consumir y descartar caracteres del buffer
     }
 }
+void mostrarMensajeGanaste()
+{
+    printf("\n");
+    printf("   _____                            _        \n");
+    printf("  / ____|                          | |       \n");
+    printf(" | |  __   __ _  _ __    __ _  ___ | |_  ___ \n");
+    printf(" | | |_ | / _` || '_ \\  / _` |/ __|| __|/ _ \\\n");
+    printf(" | |__| || (_| || | | || (_| |\\__ \\| |_|  __/\n");
+    printf("  \\_____| \\__,_||_| |_| \\__,_||___/ \\__|\\___|\n");
+    printf("                                             \n");
+    printf("                                             \n");
+    printf("\033[1;32m                  ¡Ganaste! 🎉\033[0m\n");
+    printf("\n");
+}
+void mostrarMensajePerdiste()
+{
+    printf("\n");
+    printf("   _____                _  _       _        \n");
+    printf("  |  __ \\              | |(_)     | |       \n");
+    printf("  | |__) |___  _ __  __| | _  ___ | |_  ___ \n");
+    printf("  |  ___// _ \\| '__|/ _` || |/ __|| __|/ _ \\\n");
+    printf("  | |   |  __/| |  | (_| || |\\__ \\| |_|  __/\n");
+    printf("  |_|    \\___||_|   \\__,_||_||___/ \\__|\\___|\n");
+    printf("                                            \n");
+    printf("                                            \n");
+    printf("\033[1;31m                  ¡Perdiste! 😢\033[0m\n");
+    printf("\n");
+}
 
 void initializeBoard(int tamanio, char tablero[tamanio][tamanio])
 {
@@ -247,7 +298,7 @@ void initializeBoard(int tamanio, char tablero[tamanio][tamanio])
     {
         for (int j = 0; j < tamanio; j++)
         {
-            tablero[i][j] = '-';
+            tablero[i][j] = '~';
         }
     }
 }
@@ -256,6 +307,9 @@ int playGame(int tamanioTablero)
     int puntos = 0;
     int barcosPropios = 4;
     int barcosEnemigos = 4;
+    int turnos = 0;
+    int tirosAcertados = 0;
+    int tirosFallados = 0;
 
     int posicionesEnemigas[4][2];
     char tablero[tamanioTablero][tamanioTablero];
@@ -272,27 +326,50 @@ int playGame(int tamanioTablero)
     showTitle();
     while (barcosEnemigos > 0 && barcosPropios > 0)
     {
-        turnoJugador(tamanioTablero, tableroPcMuestra, 4, posicionesEnemigas, &barcosEnemigos);
+        turnos++;
+        bool aciertoJugador = turnoJugador(tamanioTablero, tableroPcMuestra, 4, posicionesEnemigas, &barcosEnemigos);
+        if (aciertoJugador)
+        {
+            tirosAcertados++;
+            puntos += 10; // Bonificación por cada impacto acertado
+        }
+        else
+        {
+            tirosFallados++;
+            puntos -= 2; // Penalización por un disparo fallido
+        }
         PCTurn(tamanioTablero, tablero, &barcosPropios);
-        printf("\n\tTABLERO");
-        printf("\n\n");
+        int margen = (80 - (tamanioTablero * 6)) / 2; // Margen para centrar (aprox.)
+        printf("\n%*s\033[1;36m███████████████████████████████████████████\033[0m\n", (margen - 6), "");
+        printf("%*s\033[1;36m█                TU TABLERO               █\033[0m\n", (margen - 6), "");
+        printf("%*s\033[1;36m███████████████████████████████████████████\033[0m\n\n", (margen - 6), "");
         mostrarTablero(tamanioTablero, tablero);
-        printf("\n\tTABLERO ENEMIGO");
-        printf("\n\n");
+
+        printf("\n%*s\033[1;31m███████████████████████████████████████████\033[0m\n", (margen - 6), "");
+        printf("%*s\033[1;31m█             TABLERO ENEMIGO             █\033[0m\n", (margen - 6), "");
+        printf("%*s\033[1;31m███████████████████████████████████████████\033[0m\n\n", (margen - 6), "");
         mostrarTablero(tamanioTablero, tableroPcMuestra);
         printf("\n\n");
         if (barcosEnemigos == 0)
         {
-            puntos += 100;
-            printf("GANASTE");
+            puntos += barcosPropios * 20;
+            puntos += 50 - turnos;
+            mostrarMensajeGanaste();
             break;
         }
         else if (barcosPropios == 0)
         {
-
-            printf("PERDISTE");
+            mostrarMensajePerdiste();
+            break;
         }
     }
+    if (puntos < 0)
+        puntos = 0;
+    printf("\n\n\033[1;34mEstadísticas del Juego:\033[0m\n");
+    printf("Tiros Acertados: %d\n", tirosAcertados);
+    printf("Tiros Fallidos: %d\n", tirosFallados);
+    printf("Turnos Totales: %d\n", turnos);
+    printf("Puntos Finales: \033[1;32m%d\033[0m\n", puntos);
     return puntos;
 }
 int validateCoordinates(int tamanio, int x, int y)
@@ -303,7 +380,7 @@ int validateCoordinates(int tamanio, int x, int y)
     }
     else
     {
-        printf("Invalid coordinates. Please enter values between 0 and %d for both x and y.\n", tamanio - 1);
+        printf("Coordenadas invalidas. Por favor ingrese valores entre 0 y %d para ambos x e y.\n", tamanio - 1);
         return 0; // Las coordinadas son inválidas
     }
 }
@@ -312,7 +389,7 @@ int validateShot(int tamanio, char tablero[tamanio][tamanio], int x, int y)
 {
     if (tablero[x][y] == 'O' || tablero[x][y] == 'X')
     {
-        printf("Position (%d, %d) has already been shot at. Try a different spot.\n", x, y);
+        printf("La posición (%d, %d) ya ha sido atacada. Intenta con otro lugar.\n", x, y);
         return 0;
     }
     else
@@ -321,7 +398,7 @@ int validateShot(int tamanio, char tablero[tamanio][tamanio], int x, int y)
     }
 }
 
-void turnoJugador(int tamanio, char tableroPC[tamanio][tamanio], int cantidadBarcos, int posicionesEnemigas[cantidadBarcos][2], int *barcosEnemigos)
+bool turnoJugador(int tamanio, char tableroPC[tamanio][tamanio], int cantidadBarcos, int posicionesEnemigas[cantidadBarcos][2], int *barcosEnemigos)
 {
     int x, y;
     do
@@ -336,14 +413,15 @@ void turnoJugador(int tamanio, char tableroPC[tamanio][tamanio], int cantidadBar
     {
         if (posicionesEnemigas[i][0] == x && posicionesEnemigas[i][1] == y)
         {
-            printf("¡Acertaste y hundiste un barco!\n");
+            printf("\033[1;32m¡Acertaste y hundiste un barco!\033[0m\n");
             tableroPC[x][y] = 'X';
             (*barcosEnemigos)--;
-            return;
+            return true;
         }
     }
-    printf("Fallaste.\n");
+    printf("\033[1;31mFallaste.\033[0m\n");
     tableroPC[x][y] = 'O';
+    return false;
 }
 void PCTurn(int tamanio, char tableroJugador[tamanio][tamanio], int *barcosJugador)
 {
@@ -362,15 +440,15 @@ void PCTurn(int tamanio, char tableroJugador[tamanio][tamanio], int *barcosJugad
     if (tableroJugador[randomRowPosition][randomColumnPosition] == 'B')
     {
         tableroJugador[randomRowPosition][randomColumnPosition] = 'X'; // Barco hundido
-        printf("PC has fired at (%d, %d)\n", randomRowPosition, randomColumnPosition);
-        printf("The PC has sunk one of your ships.\n");
+        printf("\033[1;33mEl enemigo ha disparado a la posición (%d, %d).\033[0m\n", randomRowPosition, randomColumnPosition);
+        printf("\033[1;31mEl enemigo ha hundido uno de tus barcos.\033[0m\n");
         (*barcosJugador)--;
     }
     else
     {
         tableroJugador[randomRowPosition][randomColumnPosition] = 'O'; // Agua
-        printf("PC has fired at (%d, %d)\n", randomRowPosition, randomColumnPosition);
-        printf("The PC has failed.\n");
+        printf("\033[1;33mEl enemigo ha disparado a la posición (%d, %d).\033[0m\n", randomRowPosition, randomColumnPosition);
+        printf("\033[1;32mEl enemigo ha fallado.\033[0m\n");
     }
 }
 
@@ -378,20 +456,18 @@ void *getJugadores()
 {
     FILE *archivo = fopen(PATH_ARCHIVO, "r");
     struct Jugador *jugadores;
-    jugadores = (struct Jugador *)malloc(cantidadJugadores() * sizeof(struct Jugador));
-    if (jugadores == NULL)
+    int cantJugadores = cantidadJugadores();
+    if (cantJugadores == 0)
     {
-        printf("No se pudo reservar espacio en memoria\n");
         return NULL;
     }
     else
     {
+        jugadores = (struct Jugador *)malloc(cantJugadores * sizeof(struct Jugador));
         int i = 0;
         fread((jugadores + i), sizeof(struct Jugador), 1, archivo);
         while (!feof(archivo))
         {
-            printf("%s", (jugadores + i)->nombre);
-            printf(" - %d\n", (jugadores + i)->puntos);
             i++;
             fread((jugadores + i), sizeof(struct Jugador), 1, archivo);
         }
@@ -422,7 +498,12 @@ int cantidadJugadores()
     struct Jugador ju;
     FILE *archivo = fopen(PATH_ARCHIVO, "r");
     if (archivo == NULL)
+    {
+        printf("\033[1;33m\n----------------------------------------\033[0m\n");
+        printf("\033[1;31m     No hay jugadores registrados.\033[0m\n");
+        printf("\033[1;33m----------------------------------------\033[0m\n\n");
         return 0;
+    }
     fread(&ju, sizeof(struct Jugador), 1, archivo);
     while (!feof(archivo))
     {
@@ -456,7 +537,7 @@ void actualizar(struct Jugador jugador)
         fread(&jugadores, sizeof(struct Jugador), 1, archivo);
         if (strcmp(jugadores.nombre, jugador.nombre) == 0)
         {
-            FILE *archivo = fopen(PATH_ARCHIVO, "r+");
+            // FILE *archivo = fopen(PATH_ARCHIVO, "r+");
             jugadores.puntos += jugador.puntos;
             int posicion = ftell(archivo) - sizeof(struct Jugador);
             fseek(archivo, posicion, SEEK_SET);
@@ -467,31 +548,52 @@ void actualizar(struct Jugador jugador)
         }
     }
 }
+
 void mostrarJugadores()
 {
-    struct Jugador ju;
-    FILE *archivo = fopen(PATH_ARCHIVO, "r");
-    if (archivo == NULL)
+    struct Jugador *jugadoresOrdenados = ordenarJugadores();
+    if (jugadoresOrdenados != NULL)
     {
-        printf("No se ingresaron jugadores aun");
-        return;
+
+        printf("\033[1;34m\n\t-----------------------------------\033[0m\n");
+        printf("\033[1;36m\t       RANKING DE JUGADORES     \033[0m\n");
+        printf("\033[1;34m\t-----------------------------------\033[0m\n");
+        printf("\033[1;33m\t %-20s %-10s\033[0m\n", "Jugador", "Puntos");
+        printf("\033[1;34m\t-----------------------------------\033[0m\n");
+
+        for (int i = 0; i < cantidadJugadores(); i++)
+        {
+            printf("\033[1;32m\t %d. %-18s %-10d\033[0m\n", i + 1, (jugadoresOrdenados + i)->nombre, (jugadoresOrdenados + i)->puntos);
+        }
+
+        printf("\033[1;34m\t-----------------------------------\033[0m\n\n");
     }
-    fread(&ju, sizeof(struct Jugador), 1, archivo);
-    printf("\n\n\tJugador\tPuntos");
-    while (!feof(archivo))
-    {
-        printf("\n\n\t%s\t%d", ju.nombre, ju.puntos);
-        fread(&ju, sizeof(struct Jugador), 1, archivo);
-    }
-    fclose(archivo);
 }
-void showTitleScore() {
-    printf("   _____                              \n");
-    printf("  / ____|                             \n");
-    printf(" | (___    ___  ___   _ __  ___  ___  \n");
-    printf("  \\___ \\  / __|/ _ \\ | '__|/ _ \\/ __| \n");
-    printf("  ____) || (__| (_) || |  |  __/\\__ \\ \n");
-    printf(" |_____/  \\___|\\___/ |_|   \\___||___/ \n");
-    printf("                                       \n");
-    printf("                                       \n");
+
+void *ordenarJugadores()
+{
+    struct Jugador *jugadores = getJugadores();
+    if (jugadores != NULL)
+    {
+        int cantJugadores = cantidadJugadores();
+
+        for (int i = 1; i < cantJugadores; i++)
+        {
+            struct Jugador jugadorActual;
+            strcpy(jugadorActual.nombre, (jugadores + i)->nombre);
+            jugadorActual.puntos = (jugadores + i)->puntos;
+            int j = i - 1;
+
+            while (j >= 0 && (jugadores + j)->puntos < jugadorActual.puntos)
+            {
+                strcpy((jugadores + j + 1)->nombre, (jugadores + j)->nombre);
+                (jugadores + j + 1)->puntos = (jugadores + j)->puntos;
+                j--;
+            }
+            strcpy((jugadores + j + 1)->nombre, jugadorActual.nombre);
+            (jugadores + j + 1)->puntos = jugadorActual.puntos;
+        }
+        return jugadores;
+    }
+    return NULL;
 }
