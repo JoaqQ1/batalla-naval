@@ -45,6 +45,7 @@ void showTitle()
 {
     printf("\n");
     printf("\n");
+    printf("\033[1;34m"); // Azul brillante para el título principal
     printf("  ____          _    _    _          _____  _      _        \n");
     printf(" |  _ \\        | |  | |  | |        / ____|| |    (_)      \n");
     printf(" | |_) |  __ _ | |_ | |_ | |  ___  | (___  | |__   _  _ __  \n");
@@ -53,7 +54,11 @@ void showTitle()
     printf(" |____/  \\__,_| \\__| \\__||_| \\___| |_____/ |_| |_||_|| .__/ \n");
     printf("                                                     | |    \n");
     printf("                                                     |_|    \n");
+    printf("\033[0m"); // Restablecer colores
+
+    printf("\033[1;32m"); // Verde brillante para el subtítulo
     printf("                  BattleShip! 🚢💥\n");
+    printf("\033[0m"); // Restablecer colores
     printf("\n");
     printf("\n");
 }
