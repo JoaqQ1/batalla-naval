@@ -7,8 +7,11 @@
 
 
 int main() {
-   
+    struct Jugador joaco= {"rocio",100};
     init();
+    // guardar(joaco);
+    // actualizar(joaco);
+    // mostrarJugadores();
     return 0;
 }
 

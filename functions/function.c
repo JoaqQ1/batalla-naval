@@ -13,15 +13,22 @@ struct Jugador
 };
 
 void requestName(char nombre[]);
+int playGame(int tamanio);
+void showTitle();
+void showTitleScore();
+void initializeBoard(int tamanio, char tablero[tamanio][tamanio]);
 void mostrarTablero(int tamanio, char tablero[tamanio][tamanio]);
-void initializeBoard(int tamanio, char tablero[tamanio][tamanio]);
-void playGame(int tamanio);
-void initializeBoard(int tamanio, char tablero[tamanio][tamanio]);
 void colocarBarcosJugador(int tamanio, char tablero[tamanio][tamanio], int cantidadBarcos);
 void colocarBarcosPC(int tamanio, char tablero[tamanio][tamanio], int cantidadBarcos, int posicionesEnemigas[cantidadBarcos][2]);
-void showTitle();
 void turnoJugador(int tamanio, char tableroPC[tamanio][tamanio], int cantidadBarcos, int posicionesEnemigas[cantidadBarcos][2], int *barcosEnemigos);
 void PCTurn(int tamanio, char tableroJugador[tamanio][tamanio], int *barcosJugador);
+int cantidadJugadores();
+void *getJugadores();
+void guardar(struct Jugador jugador);
+void actualizar(struct Jugador jugador);
+void mostrarJugadores();
+bool existeElJugador(struct Jugador jugador);
+
 void showRules()
 {
     printf("\nREGLAS DEL JUEGO: BATALLA NAVAL\n\n"
@@ -80,10 +87,20 @@ void init()
         {
         case '1':
             printf("\nStarting the game...\n");
-            playGame(4);
+            int puntos = playGame(4);
+            jugador.puntos = puntos;
+            if (existeElJugador(jugador))
+            {
+                actualizar(jugador);
+            }
+            else
+            {
+                guardar(jugador);
+            }
             break;
         case '2':
-            printf("\nOpening options menu...\n");
+            showTitleScore();
+            mostrarJugadores();
             break;
         case '3':
             printf("\nExiting the game. Goodbye!\n");
@@ -204,6 +221,7 @@ void colocarBarcosPC(int tamanio, char tablero[tamanio][tamanio], int cantidadBa
                         posicionesEnemigas[i][0] = x;
                         posicionesEnemigas[i][1] = y;
                         tablero[x][y] = 'B';
+                        printf("[%d][%d]", x, y);
                     }
                     else
                     {
@@ -222,15 +240,7 @@ void limpiarBuffer()
         // Consumir y descartar caracteres del buffer
     }
 }
-void guardarDatos(struct Jugador *jugador)
-{
-    struct Jugador jugadores;
-    printf("ENTRE");
-    FILE *archivoLectura = fopen(PATH_ARCHIVO, "r");
-    fread(&jugadores, sizeof(struct Jugador), 1, archivoLectura);
-    printf("%s", jugadores.nombre);
-    fclose(archivoLectura);
-}
+
 void initializeBoard(int tamanio, char tablero[tamanio][tamanio])
 {
     for (int i = 0; i < tamanio; i++)
@@ -241,8 +251,9 @@ void initializeBoard(int tamanio, char tablero[tamanio][tamanio])
         }
     }
 }
-void playGame(int tamanioTablero)
+int playGame(int tamanioTablero)
 {
+    int puntos = 0;
     int barcosPropios = 4;
     int barcosEnemigos = 4;
 
@@ -272,6 +283,7 @@ void playGame(int tamanioTablero)
         printf("\n\n");
         if (barcosEnemigos == 0)
         {
+            puntos += 100;
             printf("GANASTE");
             break;
         }
@@ -281,10 +293,8 @@ void playGame(int tamanioTablero)
             printf("PERDISTE");
         }
     }
+    return puntos;
 }
-
-// ###
-// Función que valida las coordenadas ingresadas
 int validateCoordinates(int tamanio, int x, int y)
 {
     if (x >= 0 && x < tamanio && y >= 0 && y < tamanio)
@@ -297,7 +307,6 @@ int validateCoordinates(int tamanio, int x, int y)
         return 0; // Las coordinadas son inválidas
     }
 }
-//----------------------------------------------------
 // Función que valida el tiro
 int validateShot(int tamanio, char tablero[tamanio][tamanio], int x, int y)
 {
@@ -311,7 +320,6 @@ int validateShot(int tamanio, char tablero[tamanio][tamanio], int x, int y)
         return 1;
     }
 }
-// #####
 
 void turnoJugador(int tamanio, char tableroPC[tamanio][tamanio], int cantidadBarcos, int posicionesEnemigas[cantidadBarcos][2], int *barcosEnemigos)
 {
@@ -364,4 +372,126 @@ void PCTurn(int tamanio, char tableroJugador[tamanio][tamanio], int *barcosJugad
         printf("PC has fired at (%d, %d)\n", randomRowPosition, randomColumnPosition);
         printf("The PC has failed.\n");
     }
+}
+
+void *getJugadores()
+{
+    FILE *archivo = fopen(PATH_ARCHIVO, "r");
+    struct Jugador *jugadores;
+    jugadores = (struct Jugador *)malloc(cantidadJugadores() * sizeof(struct Jugador));
+    if (jugadores == NULL)
+    {
+        printf("No se pudo reservar espacio en memoria\n");
+        return NULL;
+    }
+    else
+    {
+        int i = 0;
+        fread((jugadores + i), sizeof(struct Jugador), 1, archivo);
+        while (!feof(archivo))
+        {
+            printf("%s", (jugadores + i)->nombre);
+            printf(" - %d\n", (jugadores + i)->puntos);
+            i++;
+            fread((jugadores + i), sizeof(struct Jugador), 1, archivo);
+        }
+
+        return jugadores;
+    }
+}
+
+bool existeElJugador(struct Jugador jugador)
+{
+    struct Jugador ju;
+    FILE *archivo = fopen(PATH_ARCHIVO, "r");
+    if (archivo == NULL)
+        return 0;
+    fread(&ju, sizeof(struct Jugador), 1, archivo);
+    while (!feof(archivo))
+    {
+        if (strcmp(ju.nombre, jugador.nombre) == 0)
+            return true;
+        fread(&ju, sizeof(struct Jugador), 1, archivo);
+    }
+    fclose(archivo);
+    return false;
+}
+int cantidadJugadores()
+{
+    int contadorJugadores = 0;
+    struct Jugador ju;
+    FILE *archivo = fopen(PATH_ARCHIVO, "r");
+    if (archivo == NULL)
+        return 0;
+    fread(&ju, sizeof(struct Jugador), 1, archivo);
+    while (!feof(archivo))
+    {
+        fread(&ju, sizeof(struct Jugador), 1, archivo);
+        contadorJugadores++;
+    }
+    fclose(archivo);
+    return contadorJugadores;
+}
+
+void guardar(struct Jugador jugador)
+{
+    FILE *archivo = fopen(PATH_ARCHIVO, "ab+");
+    if (archivo == NULL)
+        return;
+    struct Jugador jugadores;
+    strcpy(jugadores.nombre, jugador.nombre);
+    jugadores.puntos = jugador.puntos;
+    fwrite(&jugadores, sizeof(struct Jugador), 1, archivo);
+    fclose(archivo);
+}
+void actualizar(struct Jugador jugador)
+{
+    FILE *archivo = fopen(PATH_ARCHIVO, "r+");
+    if (archivo == NULL)
+        return;
+    struct Jugador jugadores;
+    fread(&jugadores, sizeof(struct Jugador), 1, archivo);
+    while (!feof(archivo))
+    {
+        fread(&jugadores, sizeof(struct Jugador), 1, archivo);
+        if (strcmp(jugadores.nombre, jugador.nombre) == 0)
+        {
+            FILE *archivo = fopen(PATH_ARCHIVO, "r+");
+            jugadores.puntos += jugador.puntos;
+            int posicion = ftell(archivo) - sizeof(struct Jugador);
+            fseek(archivo, posicion, SEEK_SET);
+            fwrite(&jugadores, sizeof(struct Jugador), 1, archivo);
+            printf("Se modifico con exito");
+            fclose(archivo);
+            return;
+        }
+    }
+}
+void mostrarJugadores()
+{
+    struct Jugador ju;
+    FILE *archivo = fopen(PATH_ARCHIVO, "r");
+    if (archivo == NULL)
+    {
+        printf("No se ingresaron jugadores aun");
+        return;
+    }
+    fread(&ju, sizeof(struct Jugador), 1, archivo);
+    printf("\n\n\tJugador\tPuntos");
+    while (!feof(archivo))
+    {
+        printf("\n\n\t%s\t%d", ju.nombre, ju.puntos);
+        fread(&ju, sizeof(struct Jugador), 1, archivo);
+    }
+    fclose(archivo);
+}
+void showTitleScore() {
+    printf("   _____                              \n");
+    printf("  / ____|                             \n");
+    printf(" | (___    ___  ___   _ __  ___  ___  \n");
+    printf("  \\___ \\  / __|/ _ \\ | '__|/ _ \\/ __| \n");
+    printf("  ____) || (__| (_) || |  |  __/\\__ \\ \n");
+    printf(" |_____/  \\___|\\___/ |_|   \\___||___/ \n");
+    printf("                                       \n");
+    printf("                                       \n");
 }
