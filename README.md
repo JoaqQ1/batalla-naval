@@ -34,12 +34,21 @@ En Git Bash, escribe el siguiente comando reemplazando el enlace por el de tu re
 Esto descargará todos los archivos del repositorio en tu carpeta actual.
 
 ---
-# Intrucciones de ejecucion
-#### Tecnologías nesesarias:
-* GCC
-* Vscode (o el IDE de tu preferencia)
+# Instrucciones de ejecución
 
+Este es un juego de Batalla Naval. A continuación, se indican los pasos para ejecutar el código una vez clonado.
 
-Y listo! Ya tienes el repositorio clonado en tu computadora. 🎉
+### Tecnologías necesarias:
+- **GCC** (GNU Compiler Collection)
+- **Visual Studio Code** (o el IDE de tu preferencia)
 
-Si tienes alguna duda adicional, no dudes en consultarla. 😊
+### Pasos para ejecutar el juego:
+**1. Acceder a la carpeta del proyecto:** Dirígete a la carpeta batalla-naval con el siguiente comando:
+``
+cd batalla-naval
+``
+ **2.Compilar y ejecutar el código:** Una vez dentro de la carpeta, ingresa el siguiente comando para compilar y ejecutar el juego:
+``
+gcc -o main main.c && ./main
+``
+¡Listo! Ahora deberías poder jugar Batalla Naval.
