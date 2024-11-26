@@ -6,6 +6,8 @@
 #include <ctype.h>
 #define PATH_ARCHIVO "jugadores.txt"
 #define MAX_LENGTH 20
+#define CANT_BARCOS 4
+#define TAM_TABLERO 4
 struct Jugador
 {
     char nombre[MAX_LENGTH];
@@ -29,17 +31,22 @@ void mostrarJugadores();
 bool existeElJugador(struct Jugador jugador);
 void mostrarMensajeGanaste();
 void mostrarMensajePerdiste();
+void limpiarBuffer();
+int obtenerEntero();
 
 void showRules()
 {
     printf("\n\n"
-           "\t\t • Objetivo: Hundir todos los barcos de la computadora antes de que ella hunda los tuyos.\n"
-           "\t\t • Barcos: Todos los barcos ocupan 1 casilla.\n"
-           "\t\t • Colocación: Los barcos se colocan en un tablero de NxN, en posiciones horizontales o verticales.\n"
-           "\t\t • Turnos: Dispara a una coordenada del tablero enemigo.\n"
-           "\t\t • La computadora responderá con un disparo en tu tablero.\n"
-           "\t\t • Impactos: \n\t\t\t'Agua' si no hay barco.\n\t\t\t'Tocado' si aciertas un barco.\n\t\t\t'Hundido' si destruyes todo un barco.\n\n"
-           "\t\tGana: El primer jugador en hundir todos los barcos del oponente.\n\n");
+           "\033[1;34m\t\t • \033[0m\033[1;33mObjetivo:\033[0m Hundir todos los barcos de la computadora antes de que ella hunda los tuyos.\n"
+           "\033[1;34m\t\t • \033[0m\033[1;33mBarcos:\033[0m Todos los barcos ocupan 1 casilla.\n"
+           "\033[1;34m\t\t • \033[0m\033[1;33mColocación:\033[0m Los barcos se colocan en un tablero de NxN, en posiciones horizontales o verticales.\n"
+           "\033[1;34m\t\t • \033[0m\033[1;33mTurnos:\033[0m Dispara a una coordenada del tablero enemigo.\n"
+           "\033[1;34m\t\t • \033[0m\033[1;33mLa computadora responderá con un disparo en tu tablero.\n"
+           "\033[1;34m\t\t • \033[0m\033[1;33mImpactos:\033[0m\n"
+           "\t\t\t\033[1;34m'Agua'\033[0m si no hay barco.\n"
+           "\t\t\t\033[1;32m'Tocado'\033[0m si aciertas un barco.\n"
+           "\t\t\t\033[1;31m'Hundido'\033[0m si destruyes todo un barco.\n\n"
+           "\033[1;34m\t\tGana:\033[0m El primer jugador en hundir todos los barcos del oponente.\n\n");
 }
 void showTitle()
 {
@@ -64,23 +71,24 @@ void showTitle()
 }
 void init()
 {
-    char option;
     struct Jugador jugador;
     int puntos;
-    showRules();
     requestName(jugador.nombre);
+    showRules();
+
     do
     {
         showTitle();
-        printf("   Hola %s, por favor ingrese una opcion:\n", jugador.nombre);
-        printf("   --------------------------------------------------------------------------\n");
-        printf("   1. JUGAR\n");
-        printf("   2. PUNTAJES\n");
-        printf("   3. SALIR\n");
-        printf("   --------------------------------------------------------------------------\n");
+
+        printf("   \033[1;34m--------------------------------------------------------------------------\033[0m\n");
+        printf("   \033[1;33m1.\033[0m \033[1;32mJUGAR\033[0m\n");
+        printf("   \033[1;33m2.\033[0m \033[1;32mPUNTAJES\033[0m\n");
+        printf("   \033[1;33m3.\033[0m \033[1;32mSALIR\033[0m\n");
+        printf("   \033[1;34m--------------------------------------------------------------------------\033[0m\n");
         printf("\n");
 
-        printf("  Elija su opcion: ");
+        char option;
+        printf("\033[1;35m  Por favor, elija su opcion: \033[0m");
         option = getchar();
 
         while (getchar() != '\n')
@@ -89,7 +97,7 @@ void init()
         switch (option)
         {
         case '1':
-            puntos = playGame(4);
+            puntos = playGame(TAM_TABLERO);
             jugador.puntos = puntos;
             if (existeElJugador(jugador))
             {
@@ -104,17 +112,16 @@ void init()
             mostrarJugadores();
             break;
         case '3':
-            printf("\n Saliendo del juego. Hasta luego!\n");
+            printf("\n\033[1;32m Saliendo del juego. Hasta luego!\033[0m\n");
             break;
         default:
             printf("\033[1;31m                  Opcion invalida, por favor ingrese una opcion valida.\033[0m\n");
         }
-
         if (option == '3')
         {
             break;
         }
-
+        limpiarBuffer();
     } while (1);
 }
 
@@ -140,6 +147,7 @@ void requestName(char name[])
         fgets(name, 50, stdin);
         name[strcspn(name, "\n")] = '\0';
     }
+    printf("\033[1;36m   Hola \033[1;32m%s\033[0m, a continuacion veras como se juega BattleShip:\n", name);
 }
 
 void colocarBarcosJugador(int tamanio, char tablero[tamanio][tamanio], int cantidadBarcos)
@@ -150,18 +158,24 @@ void colocarBarcosJugador(int tamanio, char tablero[tamanio][tamanio], int canti
     for (int i = 0; i < cantidadBarcos; i++)
     {
 
-        printf("Por favor, ingrese la fila donde quiere que se ubique a su barco %d\n", (1 + i));
-        scanf("%d", &fila);
+        printf("\033[1;32mPor favor, ingrese la fila donde quiere que se ubique a su barco %d\033[0m\n", (1 + i));
+        // scanf("%d", &fila);
+        fila = obtenerEntero();
         while (fila < 0 || fila >= tamanio)
         {
-            printf("\n\tError!. Por favor, ingrese una fila que este dentro del rango [0,%d]\n", tamanio);
+            printf("\n\t\033[1;31mError!. Por favor, ingrese una fila que este dentro del rango [0,%d]\033[0m\n", tamanio);
+            while (getchar() != '\n')
+                ;
             scanf("%d", &fila);
         }
-        printf("Por favor, ingrese la columna donde quiere que se ubique a su barco %d\n", (1 + i));
-        scanf("%d", &columna);
+        printf("\033[1;32mPor favor, ingrese la columna donde quiere que se ubique a su barco %d\033[0m\n", (1 + i));
+        // scanf("%d", &columna);
+        columna = obtenerEntero();
         while (columna < 0 || columna >= tamanio)
         {
-            printf("\n\tPor favor, ingrese una columna que este dentro del rango [0,%d]\n", tamanio);
+            printf("\n\t\033[1;31mPor favor, ingrese una columna que este dentro del rango [0,%d]\033[0m\n", tamanio);
+            while (getchar() != '\n')
+                ;
             scanf("%d", &columna);
         }
 
@@ -177,7 +191,7 @@ void colocarBarcosJugador(int tamanio, char tablero[tamanio][tamanio], int canti
                     }
                     else
                     {
-                        printf("\n\n\t\tEn las coordenadas [%d,%d] ya hay un barco\n\t\tPor favor, re ingrese otras coordenadas\n\n", fila, columna);
+                        printf("\n\n\t\t\033[1;31mEn las coordenadas [%d,%d] ya hay un barco\033[0m\n\t\t\033[1;33mPor favor, re ingrese otras coordenadas\033[0m\n\n", fila, columna);
                         i--;
                     }
                 }
@@ -186,6 +200,18 @@ void colocarBarcosJugador(int tamanio, char tablero[tamanio][tamanio], int canti
 
         mostrarTablero(tamanio, tablero);
     }
+}
+int obtenerEntero()
+{
+    int numero;
+    while (scanf("%d", &numero) != 1)
+    {
+        // Si la entrada no es un número, mostramos un mensaje y limpiamos el buffer
+        printf("\033[1;31mEntrada inválida, por favor ingrese un número entero.\033[0m\n");
+        limpiarBuffer();
+        printf("\033[1;32mPor favor, ingrese un número válido: \033[0m");
+    }
+    return numero;
 }
 
 void mostrarTablero(int tamanio, char tablero[tamanio][tamanio])
@@ -249,7 +275,6 @@ void colocarBarcosPC(int tamanio, char tablero[tamanio][tamanio], int cantidadBa
                         posicionesEnemigas[i][0] = x;
                         posicionesEnemigas[i][1] = y;
                         tablero[x][y] = 'B';
-                        printf("[%d][%d]", x, y);
                     }
                     else
                     {
@@ -316,7 +341,7 @@ int playGame(int tamanioTablero)
     int tirosAcertados = 0;
     int tirosFallados = 0;
 
-    int posicionesEnemigas[4][2];
+    int posicionesEnemigas[CANT_BARCOS][2];// => 2 por las posiciones (x,y)
     char tablero[tamanioTablero][tamanioTablero];
     char tableroPcOculto[tamanioTablero][tamanioTablero];
     char tableroPcMuestra[tamanioTablero][tamanioTablero];
@@ -350,7 +375,7 @@ int playGame(int tamanioTablero)
         printf("%*s\033[1;36m███████████████████████████████████████████\033[0m\n\n", (margen - 6), "");
         mostrarTablero(tamanioTablero, tablero);
 
-        printf("\n%*s\033[1;31m███████████████████████████████████████████\033[0m\n", (margen - 6), "");
+        printf("\n\n%*s\033[1;31m███████████████████████████████████████████\033[0m\n", (margen - 6), "");
         printf("%*s\033[1;31m█             TABLERO ENEMIGO             █\033[0m\n", (margen - 6), "");
         printf("%*s\033[1;31m███████████████████████████████████████████\033[0m\n\n", (margen - 6), "");
         mostrarTablero(tamanioTablero, tableroPcMuestra);
@@ -385,7 +410,7 @@ int validateCoordinates(int tamanio, int x, int y)
     }
     else
     {
-        printf("Coordenadas invalidas. Por favor ingrese valores entre 0 y %d para ambos x e y.\n", tamanio - 1);
+        printf("\033[1;31mCoordenadas invalidas. Por favor ingrese valores entre 0 y %d para ambos x e y.\033[0m\n", tamanio - 1);
         return 0; // Las coordinadas son inválidas
     }
 }
@@ -394,7 +419,7 @@ int validateShot(int tamanio, char tablero[tamanio][tamanio], int x, int y)
 {
     if (tablero[x][y] == 'O' || tablero[x][y] == 'X')
     {
-        printf("La posición (%d, %d) ya ha sido atacada. Intenta con otro lugar.\n", x, y);
+        printf("\033[1;33mLa posición (%d, %d) ya ha sido atacada. Intenta con otro lugar.\033[0m\n", x, y);
         return 0;
     }
     else
@@ -408,10 +433,10 @@ bool turnoJugador(int tamanio, char tableroPC[tamanio][tamanio], int cantidadBar
     int x, y;
     do
     {
-        printf("Ingresa la coordenada X: ");
-        scanf("%d", &x);
-        printf("Ingresa la coordenada Y: ");
-        scanf("%d", &y);
+        printf("\033[1;34mIngresa la coordenada X: \033[0m");
+        x = obtenerEntero();
+        printf("\033[1;34mIngresa la coordenada Y: \033[0m");
+        y = obtenerEntero();
     } while (!validateCoordinates(tamanio, x, y) || !validateShot(tamanio, tableroPC, x, y));
 
     for (int i = 0; i < tamanio; i++)
@@ -572,6 +597,7 @@ void mostrarJugadores()
         }
 
         printf("\033[1;34m\t-----------------------------------\033[0m\n\n");
+        printf("Presione enter para continuar..");
     }
 }
 
@@ -581,7 +607,7 @@ void *ordenarJugadores()
     if (jugadores != NULL)
     {
         int cantJugadores = cantidadJugadores();
-
+        
         for (int i = 1; i < cantJugadores; i++)
         {
             struct Jugador jugadorActual;
