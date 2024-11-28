@@ -33,6 +33,7 @@ void mostrarMensajeGanaste();
 void mostrarMensajePerdiste();
 void limpiarBuffer();
 int obtenerEntero();
+void mostrarMensajeInicio();
 
 void showRules()
 {
@@ -353,7 +354,7 @@ int playGame(int tamanioTablero)
     printf("\n\n");
     colocarBarcosPC(tamanioTablero, tableroPcOculto, 4, posicionesEnemigas);
 
-    showTitle();
+    mostrarMensajeInicio();
     while (barcosEnemigos > 0 && barcosPropios > 0)
     {
         turnos++;
@@ -515,6 +516,7 @@ bool existeElJugador(struct Jugador jugador)
     fread(&ju, sizeof(struct Jugador), 1, archivo);
     while (!feof(archivo))
     {
+
         if (strcmp(ju.nombre, jugador.nombre) == 0)
             return true;
         fread(&ju, sizeof(struct Jugador), 1, archivo);
@@ -557,6 +559,7 @@ void guardar(struct Jugador jugador)
 }
 void actualizar(struct Jugador jugador)
 {
+
     FILE *archivo = fopen(PATH_ARCHIVO, "r+");
     if (archivo == NULL)
         return;
@@ -564,18 +567,17 @@ void actualizar(struct Jugador jugador)
     fread(&jugadores, sizeof(struct Jugador), 1, archivo);
     while (!feof(archivo))
     {
-        fread(&jugadores, sizeof(struct Jugador), 1, archivo);
         if (strcmp(jugadores.nombre, jugador.nombre) == 0)
         {
-            // FILE *archivo = fopen(PATH_ARCHIVO, "r+");
+
             jugadores.puntos += jugador.puntos;
             int posicion = ftell(archivo) - sizeof(struct Jugador);
             fseek(archivo, posicion, SEEK_SET);
             fwrite(&jugadores, sizeof(struct Jugador), 1, archivo);
-            printf("Se modifico con exito");
             fclose(archivo);
             return;
         }
+        fread(&jugadores, sizeof(struct Jugador), 1, archivo);
     }
 }
 
@@ -627,4 +629,22 @@ void *ordenarJugadores()
         return jugadores;
     }
     return NULL;
+}
+void mostrarMensajeInicio() {
+    // Código ANSI para el color verde
+    printf("\033[1;32m");  // Establece el texto en verde brillante
+    
+    // Mensaje
+    printf("   _____                   _                                 _     _                            \n");
+    printf("  / ____|                 (_)                               | |   (_)                           \n");
+    printf(" | |      ___   _ __ ___   _   ___  _ __   ____ __ _    ___ | |    _  _   _   ___   __ _   ___  \n");
+    printf(" | |     / _ \\ | '_ ` _ \\ | | / _ \\| '_ \\ |_  // _` |  / _ \\| |   | || | | | / _ \\ / _` | / _ \\ \n");
+    printf(" | |____| (_) || | | | | || ||  __/| | | | / /| (_| | |  __/| |   | || |_| ||  __/| (_| || (_) |\n");
+    printf("  \\_____|\\___/ |_| |_| |_||_| \\___||_| |_|/___|\\__,_|  \\___||_|   | | \\__,_| \\___| \\__, | \\___/ \n");
+    printf("                                                                 _/ |               __/ |       \n");
+    printf("                                                                |__/               |___/        \n");
+    printf("\nComienza el juego\n");
+    
+    // Restablecer color al predeterminado
+    printf("\033[0m");
 }
